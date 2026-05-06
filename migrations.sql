@@ -37,6 +37,15 @@ CREATE POLICY "Admins can manage vouchers" ON public.vouchers FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
+-- Update orders table
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS subtotal_amount DECIMAL(10,2);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_fee DECIMAL(10,2);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS discount_amount DECIMAL(10,2);
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS delivery_address TEXT;
+
+-- Update inventory table
+ALTER TABLE public.inventory ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW());
+
 -- RLS for audit_logs
 ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Admins can view audit logs" ON public.audit_logs FOR SELECT USING (

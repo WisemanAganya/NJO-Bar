@@ -60,7 +60,6 @@ export function AdminDashboard() {
           }));
           setBookings(mapped as Booking[]);
         }
-        setCocktails(cocktailsRes.data || []);
         setInventory(inventoryRes.data || []);
         setOrders(ordersRes.data || []);
         setEnrollments(enrollmentsRes.data || []);

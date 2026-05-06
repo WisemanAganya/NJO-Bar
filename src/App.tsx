@@ -113,7 +113,7 @@ export function RootLayout() {
       <LoadingProgress />
       <div className="min-h-screen bg-zinc-950 text-white font-sans selection:bg-amber-500 selection:text-black">
         <Navbar
-          user={user}
+          user={profile}
           onLogin={() => setShowLogin(true)}
           onLogout={handleLogout}
         />

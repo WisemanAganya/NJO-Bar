@@ -31,10 +31,10 @@ import { VoucherSystem } from './components/VoucherSystem';
 
 import { EventTypesSection } from './components/EventTypesSection';
 
-// Protected Route Wrapper (Simple version, App.tsx handles the main logic)
-const ProtectedRoute = ({ children, user, role }: { children: React.ReactNode, user: any, role?: string }) => {
-  if (!user) return <Navigate to="/" replace />;
-  if (role && user.role !== role) return <Navigate to="/" replace />;
+// Protected Route Wrapper
+const ProtectedRoute = ({ children, profile, role }: { children: React.ReactNode, profile: any, role?: string }) => {
+  if (!profile) return <Navigate to="/" replace />;
+  if (role && profile.role !== role) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -71,7 +71,7 @@ export const createRouter = (user: any, profile: any, onLogout: () => void) => c
   {
     path: '/admin',
     element: (
-      <ProtectedRoute user={user} role="admin">
+      <ProtectedRoute profile={profile} role="admin">
         <CMSLayout user={profile} onLogout={onLogout} />
       </ProtectedRoute>
     ),
