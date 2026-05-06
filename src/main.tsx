@@ -20,4 +20,12 @@ if (import.meta.env.PROD && 'serviceWorker' in navigator) {
         console.error('Service worker registration failed:', error);
       });
   });
+
+  // Reload the page when a new service worker takes over
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
 }
