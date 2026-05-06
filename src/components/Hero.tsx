@@ -4,23 +4,20 @@ import { ArrowRight, GlassWater, ShieldCheck, Zap, Sparkles, MapPin, Star } from
 import { Button } from '@/components/ui/button';
 import Magnetic from '@/components/ui/magnetic';
 
-const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&q=80&w=1920',
-  'https://images.unsplash.com/photo-1578911373434-0cb395d2cbfb?auto=format&fit=crop&q=80&w=1920',
-  'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&q=80&w=1920',
-  'https://images.unsplash.com/photo-1560512823-829485b8bf24?auto=format&fit=crop&q=80&w=1920',
-  'https://images.unsplash.com/photo-1596394516093-501ba68352ba?auto=format&fit=crop&q=80&w=1920',
-  'https://images.unsplash.com/photo-1504642328773-d3f82f0f8e65?auto=format&fit=crop&q=80&w=1920',
-  'https://images.unsplash.com/photo-1543269865-cbdf26861551?auto=format&fit=crop&q=80&w=1920'
+const HERO_ASSETS = [
+  { type: 'image', url: '/H1.PNG' },
+  { type: 'image', url: '/H2.PNG' },
+  { type: 'image', url: '/H3.PNG' },
+  { type: 'video', url: 'https://www.instagram.com/reel/DV-ueiYDPKr/embed' }
 ];
 
 export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
-  const [currentImage, setCurrentImage] = React.useState(0);
+  const [currentAsset, setCurrentAsset] = React.useState(0);
   const [mousePosition, setMousePosition] = React.useState({ x: 0, y: 0 });
 
   React.useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % HERO_IMAGES.length);
+      setCurrentAsset((prev) => (prev + 1) % HERO_ASSETS.length);
     }, 10000);
 
     const handleMouseMove = (e: MouseEvent) => {
@@ -43,22 +40,35 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
       <div className="absolute inset-0 z-0">
         <AnimatePresence mode="wait">
           <motion.div
-            key={currentImage}
+            key={currentAsset}
             initial={{ opacity: 0, scale: 1.1 }}
             animate={{ 
               opacity: 0.6, 
-              scale: 1.25,
+              scale: 1.2,
               transition: { duration: 15, ease: "linear" } 
             }}
             exit={{ opacity: 0, transition: { duration: 3 } }}
             className="absolute inset-0"
           >
-            <img 
-              src={HERO_IMAGES[currentImage]} 
-              alt="Luxury Bar" 
-              className="w-full h-full object-cover filter brightness-[0.7] contrast-[1.1] saturate-[1.1]"
-              referrerPolicy="no-referrer"
-            />
+            {HERO_ASSETS[currentAsset].type === 'image' ? (
+              <img 
+                src={HERO_ASSETS[currentAsset].url} 
+                alt="Luxury Bar" 
+                className="w-full h-full object-cover filter brightness-[0.7] contrast-[1.1] saturate-[1.1]"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="w-full h-full relative">
+                <iframe
+                  src={HERO_ASSETS[currentAsset].url}
+                  className="absolute inset-0 w-full h-full border-none"
+                  style={{ pointerEvents: 'none', transform: 'scale(1.5)' }}
+                  title="Instagram Reel"
+                  allow="autoplay"
+                />
+                <div className="absolute inset-0 bg-zinc-950/40" />
+              </div>
+            )}
           </motion.div>
         </AnimatePresence>
         

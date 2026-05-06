@@ -29,7 +29,7 @@ export function Navbar({ user, onLogin, onLogout }: NavbarProps) {
   const navItems = [
     { id: 'home', label: 'Home', path: '/' },
     { id: 'bookings', label: 'Reservations', path: '/bookings' },
-    { id: 'drinks', label: 'Our Cellar', path: '/drinks' },
+    { id: 'drinks', label: 'Our Menu', path: '/drinks' },
     { id: 'packages', label: 'Packages', path: '/packages' },
     { id: 'events', label: 'Gallery', path: '/events' },
     { id: 'academy', label: 'Academy', path: '/academy' },
@@ -54,7 +54,7 @@ export function Navbar({ user, onLogin, onLogout }: NavbarProps) {
           >
             <div className="w-12 h-12 bg-amber-500 rounded-[1.25rem] flex items-center justify-center shadow-[0_10px_20px_rgba(255,107,53,0.3)] transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 overflow-hidden">
               <img 
-                src="/logo.jpg" 
+                src="/logo.jpg.jpeg" 
                 alt="Logo" 
                 className="w-full h-full object-cover"
                 onError={(e) => {

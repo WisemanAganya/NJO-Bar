@@ -164,7 +164,7 @@ export function RootLayout() {
               <div className="space-y-6">
                 <h4 className="text-[10px] uppercase font-black text-amber-500 tracking-[0.3em]">Explore</h4>
                 <ul className="space-y-4 text-sm font-bold text-white/40">
-                  <li><Link to="/drinks" className="hover:text-white transition-colors">Our Drinks</Link></li>
+                  <li><Link to="/drinks" className="hover:text-white transition-colors">Our Menu</Link></li>
                   <li><Link to="/bookings" className="hover:text-white transition-colors">Event Services</Link></li>
                   <li><Link to="/academy" className="hover:text-white transition-colors">Academy</Link></li>
                   <li><Link to="/admin" className="hover:text-white transition-colors">CMS Portal</Link></li>
