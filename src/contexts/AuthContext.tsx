@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           displayName: data.display_name,
           photoURL: data.photo_url,
           role: data.role as any,
+          accountType: data.account_type as any,
           createdAt: data.created_at,
           updatedAt: data.updated_at,
         });

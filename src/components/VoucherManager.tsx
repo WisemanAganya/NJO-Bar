@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Ticket, Plus, Search, Filter, Download, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Ticket, Plus, Search, Filter, Download, Trash2, CheckCircle, XCircle, QrCode, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { Voucher } from '@/types';
@@ -14,10 +16,55 @@ export function VoucherManager() {
   const [vouchers, setVouchers] = React.useState<Voucher[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState('');
+  const [redemptionCode, setRedemptionCode] = React.useState('');
+  const [isRedeeming, setIsRedeeming] = React.useState(false);
+  const [showScanner, setShowScanner] = React.useState(false);
 
   React.useEffect(() => {
     fetchVouchers();
   }, []);
+
+  const handleRedeem = async () => {
+    if (!redemptionCode) return;
+    setIsRedeeming(true);
+    try {
+      // 1. Verify Voucher
+      const { data: voucher, error: fetchError } = await supabase
+        .from('vouchers')
+        .select('*')
+        .eq('code', redemptionCode.toUpperCase())
+        .single();
+      
+      if (fetchError || !voucher) throw new Error('Invalid voucher code');
+      if (voucher.status === 'REDEEMED') throw new Error('Voucher has already been redeemed');
+      if (new Date(voucher.expires_at) < new Date()) throw new Error('Voucher has expired');
+
+      // 2. Mark as Redeemed
+      const { error: updateError } = await supabase
+        .from('vouchers')
+        .update({ status: 'REDEEMED' })
+        .eq('id', voucher.id);
+      
+      if (updateError) throw updateError;
+
+      // 3. Log Audit Trail
+      await supabase.from('audit_logs').insert({
+        admin_id: (await supabase.auth.getUser()).data.user?.id,
+        admin_name: 'Staff Member',
+        action: 'VOUCHER_REDEMPTION',
+        details: { voucher_id: voucher.id, code: voucher.code, value: voucher.value }
+      });
+
+      toast.success(`Voucher KSh ${voucher.value} redeemed successfully!`);
+      setRedemptionCode('');
+      setShowScanner(false);
+      fetchVouchers();
+    } catch (err: any) {
+      toast.error(err.message || 'Redemption failed');
+    } finally {
+      setIsRedeeming(false);
+    }
+  };
 
   const fetchVouchers = async () => {
     try {
@@ -57,9 +104,54 @@ export function VoucherManager() {
           <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Voucher <span className="text-amber-500">Manager</span></h2>
           <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-1">Issue and track system access passes</p>
         </div>
-        <Button className="bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl h-12 px-8 flex gap-2">
-          <Plus size={18} /> Issue Voucher
-        </Button>
+        <div className="flex gap-4">
+          <Dialog open={showScanner} onOpenChange={setShowScanner}>
+            <DialogTrigger asChild>
+              <Button className="bg-white/5 border border-white/10 text-white font-black uppercase tracking-widest rounded-xl h-12 px-8 flex gap-2 hover:bg-white/10">
+                <QrCode size={18} /> Redeem Voucher
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-zinc-950 border-white/10 text-white rounded-[3rem] p-0 overflow-hidden max-w-md">
+              <div className="p-10 space-y-8">
+                <div className="text-center">
+                  <h3 className="text-2xl font-black tracking-tighter uppercase italic">Voucher <span className="text-amber-500">Scanner</span></h3>
+                  <p className="text-white/40 text-xs font-bold uppercase tracking-widest mt-2">Verify and process redemption</p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-white/20">Voucher Code</Label>
+                    <Input 
+                      placeholder="ENTER-CODE-HERE" 
+                      className="bg-white/5 border-white/10 h-14 rounded-2xl text-center font-black text-xl tracking-[0.2em] uppercase"
+                      value={redemptionCode}
+                      onChange={(e) => setRedemptionCode(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex gap-4 items-start">
+                  <ShieldCheck className="w-6 h-6 text-amber-500 shrink-0" />
+                  <p className="text-[10px] text-amber-500/80 leading-relaxed font-bold uppercase tracking-wider">
+                    Anti-fraud active. This system tracks redemption location and device fingerprinting.
+                  </p>
+                </div>
+
+                <Button 
+                  onClick={handleRedeem}
+                  disabled={isRedeeming || !redemptionCode}
+                  className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 transition-all shadow-xl shadow-amber-500/20"
+                >
+                  {isRedeeming ? 'Verifying...' : 'Redeem & Mark Used'} <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Button className="bg-amber-500 text-black font-black uppercase tracking-widest rounded-xl h-12 px-8 flex gap-2">
+            <Plus size={18} /> Issue Voucher
+          </Button>
+        </div>
       </div>
 
       <Card className="bg-white/5 border-white/10 rounded-[2.5rem] overflow-hidden">

@@ -1,3 +1,6 @@
+-- Update profiles table
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS account_type TEXT CHECK (account_type IN ('INDIVIDUAL', 'CORPORATE', 'EVENT_HOST')) DEFAULT 'INDIVIDUAL';
+
 -- Update enrollments table
 ALTER TABLE public.enrollments ADD COLUMN IF NOT EXISTS email TEXT;
 ALTER TABLE public.enrollments ADD COLUMN IF NOT EXISTS phone TEXT;

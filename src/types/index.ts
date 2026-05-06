@@ -6,6 +6,7 @@ export interface UserProfile {
   displayName?: string;
   photoURL?: string;
   role: UserRole;
+  accountType?: 'INDIVIDUAL' | 'CORPORATE' | 'EVENT_HOST';
   createdAt: string;
   updatedAt: string;
 }
