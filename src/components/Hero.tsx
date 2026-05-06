@@ -54,7 +54,7 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
               <img 
                 src={HERO_ASSETS[currentAsset].url} 
                 alt="Luxury Bar" 
-                className="w-full h-full object-cover filter brightness-[1.1] contrast-[1.1] saturate-[1.1]"
+                className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />
             ) : (
@@ -66,15 +66,13 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
                   title="Instagram Reel"
                   allow="autoplay"
                 />
-                <div className="absolute inset-0 bg-zinc-950/20" />
               </div>
             )}
           </motion.div>
         </AnimatePresence>
         
-        {/* Advanced Overlays - Reduced for better visibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/20 to-zinc-950 z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-10" />
+        {/* Very minimal overlay to ensure text contrast only where needed */}
+        <div className="absolute inset-0 bg-zinc-950/20 z-10" />
         
         {/* Animated Grid lines for tech feel */}
         <div className="absolute inset-0 z-10 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
@@ -92,7 +90,7 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5 }}
-            className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[10px] font-black uppercase tracking-[0.4em] mb-12 backdrop-blur-xl"
+            className="inline-flex items-center gap-3 px-6 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[10px] font-black uppercase tracking-[0.4em] mb-12 backdrop-blur-xl shadow-2xl"
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -102,7 +100,7 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
           </motion.div>
 
           <div className="relative mb-16">
-            <h1 className="text-6xl md:text-[10rem] font-black tracking-tighter text-white leading-[0.85] uppercase">
+            <h1 className="text-6xl md:text-[10rem] font-black tracking-tighter text-white leading-[0.85] uppercase drop-shadow-[0_10px_10px_rgba(0,0,0,0.8)]">
               Nairobi's <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-500 to-amber-800 drop-shadow-[0_10px_30px_rgba(255,107,53,0.3)]">
                 Elite Pour.
@@ -113,7 +111,7 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
             <motion.div 
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              className="hidden xl:flex absolute -right-12 top-0 w-48 p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-2xl flex-col items-center gap-2"
+              className="hidden xl:flex absolute -right-12 top-0 w-48 p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-2xl flex-col items-center gap-2 shadow-2xl"
             >
               <div className="flex gap-1 text-amber-500">
                 {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 fill-current" />)}
@@ -124,7 +122,7 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12 items-end">
             <div className="text-left space-y-10">
-              <p className="text-xl md:text-2xl text-white/40 font-medium max-w-2xl leading-relaxed">
+              <p className="text-xl md:text-2xl text-white font-medium max-w-2xl leading-relaxed drop-shadow-lg bg-zinc-950/20 backdrop-blur-sm p-4 rounded-2xl border border-white/5">
                 Elevating Westlands and beyond. We bring world-class mixology, artisanal spirits, and precision event management to Kenya's most exclusive gatherings.
               </p>
               
@@ -138,11 +136,11 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
                     RESERVE NOW <ArrowRight className="ml-3 w-6 h-6 group-hover:translate-x-1 transition-transform stroke-[3px]" />
                   </Button>
                 </Magnetic>
-                <div className="flex items-center gap-4 text-white/40">
+                <div className="flex items-center gap-4 text-white">
                   <div className="w-px h-12 bg-white/10 hidden sm:block" />
-                  <div className="text-left">
+                  <div className="text-left drop-shadow-md">
                     <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Trusted By</p>
-                    <p className="text-sm font-bold text-white/60 uppercase tracking-tighter">Corporate Elite & Private Hosts</p>
+                    <p className="text-sm font-bold text-white/80 uppercase tracking-tighter">Corporate Elite & Private Hosts</p>
                   </div>
                 </div>
               </div>
