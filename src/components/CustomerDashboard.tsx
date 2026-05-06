@@ -38,6 +38,7 @@ export function CustomerDashboard({ user }: { user: any }) {
   const [orders, setOrders] = React.useState<Order[]>([]);
   const [enrollments, setEnrollments] = React.useState<any[]>([]);
   const [vouchers, setVouchers] = React.useState<Voucher[]>([]);
+  const [packageRequests, setPackageRequests] = React.useState<any[]>([]);
   const [profile, setProfile] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
   const [selectedVoucher, setSelectedVoucher] = React.useState<Voucher | null>(null);
@@ -45,18 +46,56 @@ export function CustomerDashboard({ user }: { user: any }) {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bookingsRes, ordersRes, enrollmentsRes, vouchersRes, profileRes] = await Promise.all([
+        const [bookingsRes, ordersRes, enrollmentsRes, vouchersRes, packageRequestsRes, profileRes] = await Promise.all([
           supabase.from('bookings').select('*').eq('client_id', user?.id).order('created_at', { ascending: false }),
           supabase.from('orders').select('*').eq('customer_id', user?.id).order('created_at', { ascending: false }),
-          supabase.from('enrollments').select('*').eq('phone', user?.user_metadata?.phone || '').order('created_at', { ascending: false }),
+          supabase.from('enrollments').select('*').eq('user_id', user?.id).order('created_at', { ascending: false }),
           supabase.from('vouchers').select('*').eq('issued_to', user?.id).order('created_at', { ascending: false }),
+          supabase.from('package_requests').select('*').eq('user_id', user?.id).order('submitted_at', { ascending: false }),
           supabase.from('profiles').select('*').eq('id', user?.id).single(),
         ]);
         
-        setBookings(bookingsRes.data || []);
-        setOrders(ordersRes.data || []);
-        setEnrollments(enrollmentsRes.data || []);
-        setVouchers(vouchersRes.data || []);
+        setBookings((bookingsRes.data || []).map((b: any) => ({
+          ...b,
+          clientId: b.client_id,
+          clientName: b.client_name,
+          eventDate: b.event_date,
+          eventType: b.event_type,
+          guestCount: b.guest_count,
+          paymentStatus: b.payment_status,
+          totalAmount: b.total_amount,
+          createdAt: b.created_at,
+          updatedAt: b.updated_at
+        })));
+        
+        setOrders((ordersRes.data || []).map((o: any) => ({
+          ...o,
+          userId: o.customer_id,
+          userName: o.customer_name,
+          totalAmount: o.total_amount,
+          paymentStatus: o.payment_status,
+          lineItems: o.items,
+          createdAt: o.created_at,
+          updatedAt: o.updated_at
+        })));
+        
+        setEnrollments((enrollmentsRes.data || []).map((e: any) => ({
+          ...e,
+          courseId: e.course_id,
+          userId: e.user_id,
+          userName: e.user_name,
+          createdAt: e.created_at
+        })));
+        
+        setVouchers((vouchersRes.data || []).map((v: any) => ({
+          ...v,
+          expiresAt: v.expires_at,
+          createdAt: v.created_at,
+          issuedTo: v.issued_to
+        })));
+
+        setPackageRequests(packageRequestsRes.data || []);
+        
         setProfile(profileRes.data || null);
       } catch (error: any) {
         console.error('Dashboard fetch error:', error);
@@ -339,38 +378,91 @@ export function CustomerDashboard({ user }: { user: any }) {
           </TabsContent>
 
           <TabsContent value="bookings">
-            <div className="space-y-6">
-              {bookings.map((booking) => (
-                <Card key={booking.id} className="bg-white/5 border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-colors">
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                    <div className="flex items-center gap-6">
-                      <div className="w-16 h-16 rounded-2xl bg-zinc-950 flex items-center justify-center text-amber-500 border border-white/5">
-                        <Calendar size={24} />
+            <div className="space-y-12">
+              {/* Event Bookings */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-1.5 h-8 bg-amber-500 rounded-full" />
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter">Event <span className="text-amber-500">Bookings</span></h3>
+                </div>
+                {bookings.map((booking) => (
+                  <Card key={booking.id} className="bg-white/5 border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-colors">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                      <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 rounded-2xl bg-zinc-950 flex items-center justify-center text-amber-500 border border-white/5">
+                          <Calendar size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-black uppercase italic tracking-tight">{booking.eventType}</h4>
+                          <p className="text-xs font-bold text-white/40 uppercase tracking-widest">{format(new Date(booking.eventDate), 'PPPP')}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="text-xl font-black uppercase italic tracking-tight">{booking.eventType}</h4>
-                        <p className="text-xs font-bold text-white/40 uppercase tracking-widest">{format(new Date(booking.eventDate), 'PPPP')}</p>
+                      <div className="flex items-center gap-6 w-full md:w-auto">
+                        <div className="hidden md:block text-right">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Guest Count</p>
+                          <p className="font-bold text-white">{booking.guestCount} People</p>
+                        </div>
+                        <Badge className={`h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest ${
+                          booking.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                          booking.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                          'bg-red-500/10 text-red-500 border-red-500/20'
+                        }`}>
+                          {booking.status}
+                        </Badge>
+                        <Button variant="ghost" size="icon" className="text-white/20 hover:text-white rounded-full">
+                          <ArrowRight size={20} />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex items-center gap-6 w-full md:w-auto">
-                      <div className="hidden md:block text-right">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Guest Count</p>
-                        <p className="font-bold text-white">{booking.guestCount} People</p>
-                      </div>
-                      <Badge className={`h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest ${
-                        booking.status === 'confirmed' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
-                        booking.status === 'pending' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
-                        'bg-red-500/10 text-red-500 border-red-500/20'
-                      }`}>
-                        {booking.status}
-                      </Badge>
-                      <Button variant="ghost" size="icon" className="text-white/20 hover:text-white rounded-full">
-                        <ArrowRight size={20} />
-                      </Button>
-                    </div>
+                  </Card>
+                ))}
+                {bookings.length === 0 && (
+                  <div className="py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">No active event bookings found</p>
                   </div>
-                </Card>
-              ))}
+                )}
+              </div>
+
+              {/* Package Requests */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-1.5 h-8 bg-blue-500 rounded-full" />
+                  <h3 className="text-xl font-black uppercase italic tracking-tighter">Package <span className="text-blue-500">Inquiries</span></h3>
+                </div>
+                {packageRequests.map((req) => (
+                  <Card key={req.id} className="bg-white/5 border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-colors">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                      <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 rounded-2xl bg-zinc-950 flex items-center justify-center text-blue-500 border border-white/5">
+                          <Users size={24} />
+                        </div>
+                        <div>
+                          <h4 className="text-xl font-black uppercase italic tracking-tight">{req.package_id.replace(/-/g, ' ')}</h4>
+                          <p className="text-xs font-bold text-white/40 uppercase tracking-widest">Submitted: {format(new Date(req.submitted_at), 'PPP')}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6 w-full md:w-auto">
+                        <div className="hidden md:block text-right">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Est. Price</p>
+                          <p className="font-bold text-white">KSh {req.estimated_price?.toLocaleString()}</p>
+                        </div>
+                        <Badge className={`h-10 px-6 rounded-xl font-black uppercase text-[10px] tracking-widest ${
+                          req.status === 'booked' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 
+                          req.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 
+                          'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                        }`}>
+                          {req.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+                {packageRequests.length === 0 && (
+                  <div className="py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">No package requests found</p>
+                  </div>
+                )}
+              </div>
             </div>
           </TabsContent>
         </Tabs>

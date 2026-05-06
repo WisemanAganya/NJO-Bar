@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
+
 
 const COURSES = [
   {
@@ -47,6 +49,7 @@ const COURSES = [
 ];
 
 export function CourseList() {
+  const { user } = useAuth();
   const [selectedCourse, setSelectedCourse] = React.useState<typeof COURSES[0] | null>(null);
   const [enrollStep, setEnrollStep] = React.useState<'details' | 'payment'>('details');
   const [loading, setLoading] = React.useState(false);
@@ -74,6 +77,7 @@ export function CourseList() {
         .from('enrollments')
         .insert({
           course_id: selectedCourse.id,
+          user_id: user?.id || null,
           user_name: formData.name,
           email: formData.email,
           phone: formData.phone,

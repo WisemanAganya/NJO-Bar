@@ -276,7 +276,7 @@ function CocktailDetails({ cocktail, user }: { cocktail: any, user: any }) {
       <div className="space-y-6">
         <div className="relative aspect-[4/5] rounded-2xl overflow-hidden border border-white/10">
           <img 
-            src={cocktail.image} 
+            src={cocktail.imageUrl} 
             alt={cocktail.name} 
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"

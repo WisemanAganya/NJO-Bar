@@ -56,9 +56,10 @@ async function startServer() {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
           fontSrc: ["'self'", "https://fonts.gstatic.com"],
-          imgSrc: ["'self'", "data:", "https:", "blob:"],
+          imgSrc: ["'self'", "data:", "https:", "blob:", "https://images.unsplash.com"],
           scriptSrc: ["'self'", "'unsafe-inline'"],
-          connectSrc: ["'self'", "https://yaayhklbardauhskrgyu.supabase.co"],
+          connectSrc: ["'self'", "https://yaayhklbardauhskrgyu.supabase.co", "https://images.unsplash.com", "wss://yaayhklbardauhskrgyu.supabase.co", "ws://localhost:3001", "ws://localhost:3002"],
+          frameSrc: ["'self'", "https://yaayhklbardauhskrgyu.supabase.co"],
         },
       },
       hsts: {

@@ -1,10 +1,15 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Ticket, Star, Sparkles, Gift, ArrowRight, Check, ShieldCheck, Zap } from 'lucide-react';
+import { Ticket, Star, Sparkles, Gift, ArrowRight, Check, ShieldCheck, Zap, Phone, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface VoucherOption {
   id: string;
@@ -51,9 +56,69 @@ const VOUCHER_OPTIONS: VoucherOption[] = [
 ];
 
 export function VoucherSystem() {
-  const handlePurchase = (option: VoucherOption) => {
-    toast.success(`Initializing purchase for ${option.title}...`);
-    // Logic for M-Pesa or Stripe would go here
+  const { user } = useAuth();
+  const [selectedOption, setSelectedOption] = React.useState<VoucherOption | null>(null);
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [showPurchase, setShowPurchase] = React.useState(false);
+
+  const handlePurchaseInit = (option: VoucherOption) => {
+    if (!user) {
+      toast.error('Please login to purchase vouchers');
+      return;
+    }
+    setSelectedOption(option);
+    setShowPurchase(true);
+  };
+
+  const handleFinalPurchase = async () => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      toast.error("Please enter a valid M-Pesa phone number");
+      return;
+    }
+    if (!selectedOption) return;
+
+    setLoading(true);
+    try {
+      // 1. Generate a temporary voucher code
+      const tempCode = `NJO-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
+      // 2. Create the voucher in PENDING_PAYMENT status
+      const { data, error } = await supabase.from('vouchers').insert({
+        code: tempCode,
+        type: selectedOption.type,
+        value: selectedOption.value,
+        description: selectedOption.description,
+        status: 'PENDING_PAYMENT',
+        issued_to: user?.id,
+        expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      }).select().single();
+
+      if (error) throw error;
+
+      // 3. Initiate M-Pesa STK Push
+      const response = await fetch('/api/mpesa/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber.startsWith('0') ? '254' + phoneNumber.slice(1) : phoneNumber,
+          amount: 1, // Using 1 KES for demo/testing
+          bookingId: data.id, // Reusing the STK push endpoint with voucher ID
+        }),
+      });
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+
+      toast.success('M-Pesa prompt sent! Check your phone to complete the purchase.');
+      setShowPurchase(false);
+      setPhoneNumber('');
+    } catch (error: any) {
+      console.error('Voucher purchase error:', error);
+      toast.error(error.message || 'Unable to process purchase.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -125,7 +190,7 @@ export function VoucherSystem() {
                   </div>
 
                   <Button 
-                    onClick={() => handlePurchase(option)}
+                    onClick={() => handlePurchaseInit(option)}
                     className={cn("w-full h-16 rounded-[1.5rem] font-black uppercase tracking-widest text-xs transition-all flex gap-3", "bg-white text-black hover:bg-amber-500")}
                   >
                     Get Voucher Now <ArrowRight size={16} />
@@ -160,7 +225,73 @@ export function VoucherSystem() {
           </div>
         </div>
       </div>
+
+      {/* Purchase Dialog */}
+      <Dialog open={showPurchase} onOpenChange={setShowPurchase}>
+        <DialogContent className="bg-zinc-950 border-white/10 text-white max-w-md rounded-[2.5rem] p-8">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black tracking-tight flex items-center gap-3">
+              <Gift className="text-amber-500 w-8 h-8" /> Purchase Voucher
+            </DialogTitle>
+            <DialogDescription className="text-white/40 text-base">
+              Secure your <span className="text-white font-bold">{selectedOption?.title}</span> and unlock premium benefits.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-6">
+            <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6 space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Voucher Value</span>
+                <span className="text-xl font-black text-white">KSh {selectedOption?.value.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Purchase Price</span>
+                <span className="text-3xl font-black text-amber-500">KSh {selectedOption?.price.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-xs font-black uppercase tracking-widest text-white/30">M-Pesa Phone Number</Label>
+              <div className="relative">
+                <Input 
+                  placeholder="2547XXXXXXXX" 
+                  className="bg-white/5 border-white/10 h-14 rounded-2xl pl-12 focus:ring-amber-500/50" 
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              </div>
+              <p className="text-[10px] text-white/30 font-medium italic">You will receive a prompt on this number.</p>
+            </div>
+
+            <div className="flex gap-4 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
+              <ShieldCheck className="text-emerald-500 w-6 h-6 shrink-0" />
+              <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider leading-relaxed">
+                Secure 256-bit encrypted transaction via Safaricom M-Pesa.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowPurchase(false)}
+              className="border-white/10 text-white h-14 rounded-2xl flex-1 font-bold"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleFinalPurchase}
+              disabled={loading}
+              className="bg-amber-500 text-black hover:bg-amber-600 font-black h-14 rounded-2xl flex-1 shadow-[0_10px_30px_rgba(255,107,53,0.3)]"
+            >
+              {loading ? 'Processing...' : 'Pay Now'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
+
   );
 }
 

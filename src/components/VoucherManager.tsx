@@ -73,7 +73,15 @@ export function VoucherManager() {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      setVouchers(data || []);
+      if (data) {
+        const mapped = data.map((v: any) => ({
+          ...v,
+          expiresAt: v.expires_at,
+          createdAt: v.created_at,
+          issuedTo: v.issued_to
+        }));
+        setVouchers(mapped);
+      }
     } catch (err) {
       console.error('Error fetching vouchers:', err);
     } finally {

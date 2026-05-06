@@ -1,13 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Briefcase, Users, Sparkles, Clock, Gift, ArrowRight, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
+import { Briefcase, Users, Sparkles, Clock, Gift, ArrowRight, CheckCircle2, ShieldCheck, Zap, Phone, Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
 
 const PACKAGES = [
   {
@@ -47,6 +51,10 @@ export function PackageBuilder({ user }: { user: any }) {
   const [staffCount, setStaffCount] = React.useState(2);
   const [customQuote, setCustomQuote] = React.useState(0);
   const [bookingRequested, setBookingRequested] = React.useState(false);
+  const [showCheckout, setShowCheckout] = React.useState(false);
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [eventDate, setEventDate] = React.useState<Date | null>(null);
+  const [location, setLocation] = React.useState('');
 
   React.useEffect(() => {
     const tierMultiplier = guestCount > 120 ? 1.5 : guestCount > 80 ? 1.3 : guestCount > 50 ? 1.15 : 1;
@@ -55,14 +63,28 @@ export function PackageBuilder({ user }: { user: any }) {
     setCustomQuote(Math.round(selectedPackage.price * tierMultiplier * durationFactor * staffFactor));
   }, [guestCount, duration, staffCount, selectedPackage]);
 
-  const requestQuote = async () => {
+  const handleRequestInit = () => {
     if (!user) {
       toast.error('Please login to request a custom package quote.');
       return;
     }
+    setShowCheckout(true);
+  };
+
+  const processCheckout = async () => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      toast.error("Please enter a valid M-Pesa phone number");
+      return;
+    }
+    if (!eventDate || !location) {
+      toast.error("Please provide event date and location");
+      return;
+    }
+
     setBookingRequested(true);
     try {
-      await supabase.from('package_requests').insert({
+      // 1. Create Package Request
+      const { data: requestData, error: requestError } = await supabase.from('package_requests').insert({
         user_id: user.id,
         package_id: selectedPackage.id,
         guest_count: guestCount,
@@ -70,9 +92,47 @@ export function PackageBuilder({ user }: { user: any }) {
         bar_style: barStyle,
         staff_count: staffCount,
         estimated_price: customQuote,
+        status: 'new',
         submitted_at: new Date().toISOString(),
+      }).select().single();
+
+      if (requestError) throw requestError;
+
+      // 2. Create corresponding Booking entry for tracking
+      const { data: bookingData, error: bookingError } = await supabase.from('bookings').insert({
+        client_id: user.id,
+        client_name: user.user_metadata?.display_name || 'Client',
+        event_date: eventDate.toISOString().split('T')[0],
+        event_type: `Package: ${selectedPackage.title}`,
+        guest_count: guestCount,
+        duration: duration,
+        location: location,
+        status: 'pending',
+        payment_status: 'unpaid',
+        total_amount: customQuote,
+      }).select().single();
+
+      if (bookingError) throw bookingError;
+
+      // 3. Initiate M-Pesa STK Push
+      const response = await fetch('/api/mpesa/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: phoneNumber.startsWith('0') ? '254' + phoneNumber.slice(1) : phoneNumber,
+          amount: 1, // Using 1 KES for testing/demo
+          bookingId: bookingData.id,
+        }),
       });
-      toast.success('Your custom package request has been sent! Our team in Nairobi will contact you shortly.');
+
+      const result = await response.json();
+      if (result.error) throw new Error(result.error);
+
+      toast.success('Package request submitted and M-Pesa prompt sent! Check your phone.');
+      setShowCheckout(false);
+      setPhoneNumber('');
+      setEventDate(null);
+      setLocation('');
     } catch (error: any) {
       console.error('Package request error:', error);
       toast.error(error.message || 'Unable to submit request.');
@@ -264,7 +324,7 @@ export function PackageBuilder({ user }: { user: any }) {
               <CardFooter className="px-0 pb-0 pt-6">
                 <Button 
                   size="lg"
-                  onClick={requestQuote} 
+                  onClick={handleRequestInit} 
                   disabled={bookingRequested} 
                   className="w-full bg-amber-500 text-black hover:bg-amber-600 h-16 rounded-2xl font-black text-lg shadow-[0_10px_30px_rgba(255,107,53,0.2)]"
                 >
@@ -326,6 +386,86 @@ export function PackageBuilder({ user }: { user: any }) {
           </motion.div>
         </div>
       </div>
+
+      {/* Checkout Dialog */}
+      <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
+        <DialogContent className="bg-zinc-950 border-white/10 text-white max-w-md rounded-[2.5rem] p-8">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-black tracking-tight flex items-center gap-3">
+              <CheckCircle2 className="text-amber-500 w-8 h-8" /> Finalize Selection
+            </DialogTitle>
+            <DialogDescription className="text-white/40 text-base">
+              Complete your request to secure the <span className="text-white font-bold">{selectedPackage.title}</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-6">
+            <div className="space-y-3">
+              <Label className="text-xs font-black uppercase tracking-widest text-white/30">Event Date</Label>
+              <div className="relative">
+                <DatePicker
+                  selected={eventDate}
+                  onChange={(date) => setEventDate(date)}
+                  dateFormat="yyyy-MM-dd"
+                  minDate={new Date()}
+                  className="w-full bg-white/5 border-white/10 pl-12 pr-3 py-4 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholderText="Select event date"
+                />
+                <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500 z-10" />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-xs font-black uppercase tracking-widest text-white/30">Event Location</Label>
+              <Input 
+                placeholder="e.g. Karen, Nairobi" 
+                className="bg-white/5 border-white/10 h-14 rounded-2xl focus:ring-amber-500/50" 
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-xs font-black uppercase tracking-widest text-amber-500">M-Pesa Number</Label>
+              <div className="relative">
+                <Input 
+                  placeholder="2547XXXXXXXX" 
+                  className="bg-white/5 border-white/10 h-14 rounded-2xl pl-12 focus:ring-amber-500/50" 
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                />
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
+              </div>
+            </div>
+
+            <div className="bg-amber-500/5 border border-amber-500/20 p-6 rounded-[2rem]">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Total Quote</p>
+                <p className="text-2xl font-black text-white">KSh {customQuote.toLocaleString()}</p>
+              </div>
+              <p className="text-[10px] text-amber-500/80 font-medium">A formal invoice will be sent after payment verification.</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCheckout(false)}
+              className="border-white/10 text-white h-14 rounded-2xl flex-1 font-bold"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={processCheckout}
+              disabled={bookingRequested}
+              className="bg-amber-500 text-black hover:bg-amber-600 font-black h-14 rounded-2xl flex-1 shadow-[0_10px_20px_rgba(255,107,53,0.2)]"
+            >
+              {bookingRequested ? 'Processing...' : 'Secure Package'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
+
   );
 }

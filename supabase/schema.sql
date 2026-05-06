@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   display_name TEXT,
   photo_url TEXT,
   role TEXT CHECK (role IN ('admin', 'staff', 'client')) DEFAULT 'client',
+  account_type TEXT CHECK (account_type IN ('INDIVIDUAL', 'CORPORATE', 'EVENT_HOST')) DEFAULT 'INDIVIDUAL',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
@@ -126,9 +127,13 @@ CREATE TABLE IF NOT EXISTS public.ratings (
 CREATE TABLE IF NOT EXISTS public.enrollments (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   course_id UUID REFERENCES public.courses(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   user_name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
   status TEXT CHECK (status IN ('pending', 'confirmed', 'completed')) DEFAULT 'pending',
+  payment_status TEXT DEFAULT 'unpaid',
+  amount DECIMAL(10,2),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
 
@@ -393,6 +398,10 @@ CREATE TABLE IF NOT EXISTS public.orders (
   customer_phone TEXT,
   items JSONB NOT NULL,
   total_amount DECIMAL(10,2) NOT NULL,
+  subtotal_amount DECIMAL(10,2),
+  delivery_fee DECIMAL(10,2),
+  discount_amount DECIMAL(10,2),
+  delivery_address TEXT,
   status TEXT CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')) DEFAULT 'pending',
   payment_status TEXT CHECK (payment_status IN ('unpaid', 'paid', 'refunded')) DEFAULT 'unpaid',
   payment_method TEXT,
@@ -401,6 +410,42 @@ CREATE TABLE IF NOT EXISTS public.orders (
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Create vouchers table
+CREATE TABLE IF NOT EXISTS public.vouchers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  code TEXT NOT NULL UNIQUE,
+  type TEXT NOT NULL,
+  value DECIMAL(10,2) NOT NULL,
+  description TEXT,
+  status TEXT DEFAULT 'ACTIVE',
+  issued_to UUID REFERENCES auth.users(id),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Create audit_logs table
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  admin_id UUID REFERENCES auth.users(id),
+  admin_name TEXT NOT NULL,
+  action TEXT NOT NULL,
+  details JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- RLS for vouchers
+ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Everyone can view their own vouchers" ON public.vouchers FOR SELECT USING (auth.uid() = issued_to OR issued_to IS NULL);
+CREATE POLICY "Admins can manage vouchers" ON public.vouchers FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- RLS for audit_logs
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins can view audit logs" ON public.audit_logs FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
 );
 
 -- Create leads table for contact form submissions
@@ -439,6 +484,46 @@ CREATE TABLE IF NOT EXISTS public.analytics (
   metric_type TEXT CHECK (metric_type IN ('booking', 'revenue', 'order', 'visitor', 'engagement')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
 );
+
+-- Create package_requests table
+CREATE TABLE IF NOT EXISTS public.package_requests (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  package_id TEXT NOT NULL,
+  guest_count INTEGER NOT NULL,
+  duration_hours INTEGER NOT NULL,
+  bar_style TEXT,
+  staff_count INTEGER,
+  estimated_price DECIMAL(10,2),
+  status TEXT CHECK (status IN ('new', 'contacted', 'booked', 'cancelled')) DEFAULT 'new',
+  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- RLS for package_requests
+ALTER TABLE public.package_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own package requests" ON public.package_requests
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create their own package requests" ON public.package_requests
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Admins and staff can view all package requests" ON public.package_requests
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('admin', 'staff')
+    )
+  );
+
+CREATE POLICY "Admins and staff can update all package requests" ON public.package_requests
+  FOR UPDATE USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('admin', 'staff')
+    )
+  );
+
 
 -- Create cms_settings table for global configuration
 CREATE TABLE IF NOT EXISTS public.cms_settings (
