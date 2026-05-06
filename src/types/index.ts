@@ -280,3 +280,24 @@ export interface NewsletterSubscriber {
   source: string;
   subscribedAt: string;
 }
+
+export interface Voucher {
+  id?: string;
+  code: string;
+  type: 'DRINK' | 'EVENT' | 'CATERING';
+  value: number;
+  description: string;
+  status: 'ACTIVE' | 'USED' | 'EXPIRED';
+  issuedTo?: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface AuditLog {
+  id?: string;
+  adminId: string;
+  adminName: string;
+  action: string;
+  details: any;
+  createdAt: string;
+}

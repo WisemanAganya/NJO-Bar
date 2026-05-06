@@ -30,6 +30,7 @@ export function Navbar({ user, onLogin, onLogout }: NavbarProps) {
     { id: 'home', label: 'Home', path: '/' },
     { id: 'bookings', label: 'Reservations', path: '/bookings' },
     { id: 'drinks', label: 'Our Menu', path: '/drinks' },
+    { id: 'vouchers', label: 'Vouchers', path: '/vouchers' },
     { id: 'packages', label: 'Packages', path: '/packages' },
     { id: 'events', label: 'Gallery', path: '/events' },
     { id: 'academy', label: 'Academy', path: '/academy' },

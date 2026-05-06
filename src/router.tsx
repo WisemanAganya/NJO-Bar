@@ -25,6 +25,7 @@ import { CustomerDashboard } from './components/CustomerDashboard';
 import { CocktailGallery } from './components/CocktailGallery';
 import { PackageBuilder } from './components/PackageBuilder';
 import { MembershipPage } from './components/MembershipPage';
+import { VoucherSystem } from './components/VoucherSystem';
 
 import { EventTypesSection } from './components/EventTypesSection';
 
@@ -61,6 +62,7 @@ export const createRouter = (user: any, profile: any, onLogout: () => void) => c
       { path: 'account', element: <div className="pt-20"><CustomerDashboard user={user} /></div> },
       { path: 'community', element: <div className="pt-20"><CocktailGallery user={user} /></div> },
       { path: 'membership', element: <div className="pt-20"><MembershipPage /></div> },
+      { path: 'vouchers', element: <div className="pt-20"><VoucherSystem /></div> },
       { path: '*', element: <Navigate to="/" replace /> }
     ]
   },

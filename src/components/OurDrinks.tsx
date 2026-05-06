@@ -97,6 +97,8 @@ export function OurDrinks({ user }: { user: any }) {
   const [promoCode, setPromoCode] = React.useState('');
   const [checkoutStep, setCheckoutStep] = React.useState<'cart' | 'details' | 'payment'>('cart');
   const [address, setAddress] = React.useState('');
+  const [voucherCode, setVoucherCode] = React.useState('');
+  const [voucherValue, setVoucherValue] = React.useState(0);
 
   const categories = useMemo(() => {
     const cats = Array.from(new Set(MENU_ITEMS.map(item => item.category)));
@@ -148,7 +150,30 @@ export function OurDrinks({ user }: { user: any }) {
 
   const discount = promoCode.trim().toLowerCase() === 'njo25' ? subtotal * 0.25 : 0;
   const deliveryFee = cart.length > 0 ? DELIVERY_FEE : 0;
-  const total = Math.max(0, subtotal - discount + deliveryFee);
+  const total = Math.max(0, subtotal - discount + deliveryFee - voucherValue);
+
+  const handleValidateVoucher = async () => {
+    if (!voucherCode) return;
+    try {
+      const { data, error } = await supabase
+        .from('vouchers')
+        .select('*')
+        .eq('code', voucherCode)
+        .eq('status', 'ACTIVE')
+        .single();
+      
+      if (error || !data) {
+        toast.error('Invalid or expired voucher code');
+        setVoucherValue(0);
+        return;
+      }
+
+      setVoucherValue(data.value);
+      toast.success(`Voucher Applied: KSh ${data.value} deducted`);
+    } catch (err) {
+      toast.error('Voucher verification failed');
+    }
+  };
 
   const handleCheckout = async () => {
     if (!user) {
@@ -393,6 +418,12 @@ export function OurDrinks({ user }: { user: any }) {
                     <span>- KSh {discount.toLocaleString()}</span>
                   </div>
                 )}
+                {voucherValue > 0 && (
+                  <div className="flex justify-between text-xs font-bold text-amber-500 uppercase tracking-widest">
+                    <span>Voucher Applied</span>
+                    <span>- KSh {voucherValue.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="pt-4 border-t border-white/10 flex justify-between items-end">
                   <span className="text-[10px] font-black uppercase text-amber-500 tracking-[0.3em]">Total Amount</span>
                   <span className="text-3xl font-black">KSh {total.toLocaleString()}</span>
@@ -417,21 +448,46 @@ export function OurDrinks({ user }: { user: any }) {
           )}
         </AnimatePresence>
 
-        {/* Promo Section at Bottom */}
+        {/* Promo & Voucher Section at Bottom */}
         {checkoutStep === 'cart' && cart.length > 0 && (
-          <div className="mt-8 pt-8 border-t border-white/10">
-            <Label className="text-[10px] font-black uppercase tracking-widest text-white/20 block mb-4">Have a promo code?</Label>
-            <div className="flex gap-2">
-              <Input 
-                placeholder="NJO25" 
-                className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-black placeholder:text-white/10"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-              />
-              {discount > 0 && (
-                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
-                  <Check size={20} />
-                </div>
+          <div className="mt-8 pt-8 border-t border-white/10 space-y-6">
+            <div className="space-y-4">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-white/20 block">Promo Code</Label>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="NJO25" 
+                  className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-black placeholder:text-white/10"
+                  value={promoCode}
+                  onChange={(e) => setPromoCode(e.target.value)}
+                />
+                {discount > 0 && (
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+                    <Check size={20} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-white/20 block">Bar Voucher</Label>
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="CODE" 
+                  className="bg-white/5 border-white/10 h-12 rounded-xl text-white font-black placeholder:text-white/10"
+                  value={voucherCode}
+                  onChange={(e) => setVoucherCode(e.target.value)}
+                />
+                <Button 
+                  onClick={handleValidateVoucher}
+                  className="h-12 bg-white/5 border border-white/10 text-white hover:bg-amber-500 hover:text-black rounded-xl font-black text-[10px]"
+                >
+                  Apply
+                </Button>
+              </div>
+              {voucherValue > 0 && (
+                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2">
+                  <Check size={10} /> -KSh {voucherValue.toLocaleString()} Applied
+                </p>
               )}
             </div>
           </div>
