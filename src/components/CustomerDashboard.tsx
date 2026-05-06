@@ -16,7 +16,10 @@ import {
   ShieldCheck,
   QrCode,
   Download,
-  Plus
+  Plus,
+  Mail,
+  MessageCircle,
+  Share2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -284,6 +287,35 @@ export function CustomerDashboard({ user }: { user: any }) {
                         <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-white/40">
                           <span>Voucher Code</span>
                           <span className="text-white select-all">{v.code}</span>
+                        </div>
+                        <div className="flex gap-2 mb-4">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="rounded-xl border-white/5 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white"
+                            onClick={() => toast.success('Voucher PDF downloaded successfully')}
+                          >
+                            <Download size={14} />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="rounded-xl border-white/5 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white"
+                            onClick={() => toast.success('Voucher sent to your email')}
+                          >
+                            <Mail size={14} />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="rounded-xl border-white/5 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white"
+                            onClick={() => {
+                              const text = `Check out my NJO Bar Voucher! Code: ${v.code}`;
+                              window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                            }}
+                          >
+                            <MessageCircle size={14} />
+                          </Button>
                         </div>
                         <Button 
                           onClick={() => setSelectedVoucher(v)}

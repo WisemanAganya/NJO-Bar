@@ -85,7 +85,8 @@ export function InventoryManagerFull() {
   const filteredInventory = inventory.filter(
     (item) =>
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.category.toLowerCase().includes(searchTerm.toLowerCase())
+      item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (searchTerm.toLowerCase() === 'low stock' && item.quantity < 5)
   );
 
   const lowStockItems = inventory.filter((item) => item.quantity < 5);
@@ -209,6 +210,15 @@ export function InventoryManagerFull() {
       )}
 
       <Card className="bg-white/5 border-white/10 rounded-[2.5rem] overflow-hidden">
+        {lowStockItems.length > 0 && (
+          <div className="mx-6 mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
+            <div className="flex items-center gap-3 text-red-500">
+              <AlertTriangle size={18} />
+              <p className="text-xs font-black uppercase tracking-widest">Attention: {lowStockItems.length} items are running low</p>
+            </div>
+            <Button variant="ghost" size="sm" className="text-red-500 hover:bg-red-500/10 font-bold text-[10px] uppercase" onClick={() => setSearchTerm('low stock')}>View Low Stock</Button>
+          </div>
+        )}
         <div className="p-6 border-b border-white/10">
           <div className="relative">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30" />
@@ -235,6 +245,7 @@ export function InventoryManagerFull() {
                   <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-white/30 text-right">Stock</th>
                   <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-white/30 text-right">Unit Price</th>
                   <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-white/30 text-right">Total Value</th>
+                  <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-white/30 text-right">Last Updated</th>
                   <th className="py-5 px-8 font-black uppercase text-[10px] tracking-[0.2em] text-white/30 text-right">Actions</th>
                 </tr>
               </thead>
@@ -257,6 +268,9 @@ export function InventoryManagerFull() {
                     </td>
                     <td className="py-6 px-8 text-right">
                       <p className="font-black text-amber-500">KSh {(item.quantity * item.price).toLocaleString()}</p>
+                    </td>
+                    <td className="py-6 px-8 text-right font-mono text-[10px] text-white/20">
+                      {item.last_updated ? new Date(item.last_updated).toLocaleString() : 'N/A'}
                     </td>
                     <td className="py-6 px-8">
                       <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
