@@ -14,6 +14,8 @@ import { LeadManager } from './components/LeadManager';
 import { BlogManager } from './components/BlogManager';
 import { OrdersManager } from './components/OrdersManager';
 import { SettingsManager } from './components/SettingsManager';
+import { VoucherManager } from './components/VoucherManager';
+import { AuditManager } from './components/AuditManager';
 import { Hero } from './components/Hero';
 import { BookingSection } from './components/BookingSection';
 import { CourseList } from './components/CourseList';
@@ -84,6 +86,8 @@ export const createRouter = (user: any, profile: any, onLogout: () => void) => c
       { path: 'reminders', element: <ReminderManager /> },
       { path: 'leads', element: <LeadManager /> },
       { path: 'blog', element: <BlogManager /> },
+      { path: 'vouchers', element: <VoucherManager /> },
+      { path: 'audit', element: <AuditManager /> },
       { 
         path: 'orders', 
         element: <OrdersManager />

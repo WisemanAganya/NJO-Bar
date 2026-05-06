@@ -25,6 +25,7 @@ export function AdminDashboard() {
   const [bookings, setBookings] = React.useState<Booking[]>([]);
   const [inventory, setInventory] = React.useState<InventoryItem[]>([]);
   const [orders, setOrders] = React.useState<Order[]>([]);
+  const [enrollments, setEnrollments] = React.useState<any[]>([]);
   const [leads, setLeads] = React.useState<Lead[]>([]);
   const [vouchers, setVouchers] = React.useState<Voucher[]>([]);
   const [auditLogs, setAuditLogs] = React.useState<AuditLog[]>([]);
@@ -34,10 +35,11 @@ export function AdminDashboard() {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const [bookingsRes, inventoryRes, ordersRes, leadsRes, vouchersRes, auditRes, membersRes] = await Promise.all([
+        const [bookingsRes, inventoryRes, ordersRes, enrollmentsRes, leadsRes, vouchersRes, auditRes, membersRes] = await Promise.all([
           supabase.from('bookings').select('*').order('created_at', { ascending: false }),
           supabase.from('inventory').select('*'),
           supabase.from('orders').select('*').order('created_at', { ascending: false }),
+          supabase.from('enrollments').select('*').order('created_at', { ascending: false }),
           supabase.from('leads').select('*').order('created_at', { ascending: false }),
           supabase.from('vouchers').select('*').order('created_at', { ascending: false }),
           supabase.from('audit_logs').select('*').order('created_at', { ascending: false }),
@@ -58,8 +60,10 @@ export function AdminDashboard() {
           }));
           setBookings(mapped as Booking[]);
         }
+        setCocktails(cocktailsRes.data || []);
         setInventory(inventoryRes.data || []);
         setOrders(ordersRes.data || []);
+        setEnrollments(enrollmentsRes.data || []);
         setLeads(leadsRes.data || []);
         setVouchers(vouchersRes.data || []);
         setAuditLogs(auditRes.data || []);
@@ -75,7 +79,9 @@ export function AdminDashboard() {
   }, []);
 
   // --- Calculations ---
-  const totalRevenue = bookings.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) + orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0);
+  const totalRevenue = bookings.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) + 
+                       orders.reduce((acc, curr) => acc + (curr.totalAmount || 0), 0) +
+                       enrollments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
   const totalCosts = totalRevenue * 0.4; // Mock cost calculation (40% margin)
   const netProfit = totalRevenue - totalCosts;
   const lowStockItems = inventory.filter(item => item.quantity < 5);

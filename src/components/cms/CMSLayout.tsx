@@ -18,7 +18,9 @@ import {
   Mail,
   BookOpen,
   ShoppingCart,
-  ChevronRight
+  ChevronRight,
+  Ticket,
+  History
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -48,6 +50,8 @@ export function CMSLayout({ onLogout, user, children }: CMSLayoutProps) {
     { id: 'inventory', label: 'Inventory', icon: Package, path: '/admin/inventory' },
     { id: 'blog', label: 'Blog', icon: BookOpen, path: '/admin/blog' },
     { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
+    { id: 'vouchers', label: 'Vouchers', icon: Ticket, path: '/admin/vouchers' },
+    { id: 'audit', label: 'Audit Logs', icon: History, path: '/admin/audit' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },
   ];
 

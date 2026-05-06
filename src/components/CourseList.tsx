@@ -1,9 +1,14 @@
 import React from 'react';
-import { motion } from 'motion/react';
-import { BookOpen, Clock, GraduationCap, Briefcase, Calendar, ShieldCheck, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { BookOpen, Clock, GraduationCap, Briefcase, Calendar, ShieldCheck, Zap, X, User, Mail, Phone, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 const COURSES = [
   {
@@ -42,6 +47,70 @@ const COURSES = [
 ];
 
 export function CourseList() {
+  const [selectedCourse, setSelectedCourse] = React.useState<typeof COURSES[0] | null>(null);
+  const [enrollStep, setEnrollStep] = React.useState<'details' | 'payment'>('details');
+  const [loading, setLoading] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
+
+  const handleEnroll = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast.error('Please fill in all applicant details');
+      return;
+    }
+    setEnrollStep('payment');
+  };
+
+  const handlePayment = async () => {
+    if (!selectedCourse) return;
+    setLoading(true);
+    try {
+      // 1. Create Enrollment in Supabase
+      const { data: enrollment, error: enrollError } = await supabase
+        .from('enrollments')
+        .insert({
+          course_id: selectedCourse.id,
+          user_name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          status: 'pending',
+          payment_status: 'unpaid',
+          amount: selectedCourse.price * 0.1 // 10% Deposit to secure seat
+        })
+        .select()
+        .single();
+
+      if (enrollError) throw enrollError;
+
+      // 2. Trigger M-Pesa STK Push
+      const response = await fetch('/api/mpesa/stk-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: formData.phone.startsWith('0') ? '254' + formData.phone.slice(1) : formData.phone,
+          amount: 1, // KSh 1 for testing
+          enrollmentId: enrollment.id
+        })
+      });
+
+      if (!response.ok) throw new Error('Payment initialization failed');
+
+      toast.success('M-Pesa prompt sent! Check your phone to secure your seat.');
+      setSelectedCourse(null);
+      setEnrollStep('details');
+      setFormData({ name: '', email: '', phone: '' });
+    } catch (error: any) {
+      console.error('Enrollment error:', error);
+      toast.error(error.message || 'Enrollment failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="py-24 bg-zinc-950 relative overflow-hidden">
       {/* Decorative Blur */}
@@ -123,7 +192,10 @@ export function CourseList() {
                   </div>
                 </CardContent>
                 <CardFooter className="p-8 pt-0">
-                  <Button className="w-full bg-white/5 hover:bg-amber-500 hover:text-black text-white border border-white/10 h-14 rounded-2xl font-black transition-all group-hover:shadow-[0_10px_30px_rgba(255,107,53,0.1)]">
+                  <Button 
+                    onClick={() => setSelectedCourse(course)}
+                    className="w-full bg-white/5 hover:bg-amber-500 hover:text-black text-white border border-white/10 h-14 rounded-2xl font-black transition-all group-hover:shadow-[0_10px_30px_rgba(255,107,53,0.1)]"
+                  >
                     Secure Seat <Zap className="w-4 h-4 ml-2 fill-current" />
                   </Button>
                 </CardFooter>
@@ -132,6 +204,116 @@ export function CourseList() {
           ))}
         </div>
       </div>
+
+      <Dialog open={!!selectedCourse} onOpenChange={(open) => !open && setSelectedCourse(null)}>
+        <DialogContent className="bg-zinc-950 border-white/10 text-white max-w-lg rounded-[3rem] p-0 overflow-hidden">
+          <div className="h-32 bg-amber-500 flex flex-col justify-center px-10 relative">
+            <div className="absolute top-4 right-4">
+              <Button variant="ghost" size="icon" onClick={() => setSelectedCourse(null)} className="text-black hover:bg-black/10 rounded-full">
+                <X size={20} />
+              </Button>
+            </div>
+            <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-black/40">Academy Enrollment</h3>
+            <h2 className="text-3xl font-black text-black tracking-tighter uppercase italic">{selectedCourse?.title}</h2>
+          </div>
+
+          <div className="p-10">
+            <AnimatePresence mode="wait">
+              {enrollStep === 'details' ? (
+                <motion.form 
+                  key="details"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  onSubmit={handleEnroll} 
+                  className="space-y-6"
+                >
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-white/20">Full Applicant Name</Label>
+                      <div className="relative">
+                        <Input 
+                          placeholder="John Doe" 
+                          className="bg-white/5 border-white/10 h-14 rounded-2xl pl-12 font-bold"
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-white/20">Email Address</Label>
+                      <div className="relative">
+                        <Input 
+                          type="email"
+                          placeholder="john@example.com" 
+                          className="bg-white/5 border-white/10 h-14 rounded-2xl pl-12 font-bold"
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        />
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-white/20">M-Pesa Phone Number</Label>
+                      <div className="relative">
+                        <Input 
+                          placeholder="2547XXXXXXXX" 
+                          className="bg-white/5 border-white/10 h-14 rounded-2xl pl-12 font-bold"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        />
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20" />
+                      </div>
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full h-16 bg-amber-500 text-black font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-xl shadow-amber-500/20">
+                    Next: Secure Seat <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </motion.form>
+              ) : (
+                <motion.div 
+                  key="payment"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="space-y-8"
+                >
+                  <div className="p-6 rounded-[2rem] bg-amber-500/5 border border-amber-500/20 space-y-4">
+                    <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-amber-500">
+                      <span>Course Deposit (10%)</span>
+                      <span>Security Fee</span>
+                    </div>
+                    <div className="flex justify-between items-end">
+                      <p className="text-4xl font-black text-white italic">KSh {(selectedCourse!.price * 0.1).toLocaleString()}</p>
+                      <p className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">M-Pesa STK Push</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-xs text-white/40 font-medium leading-relaxed">
+                      By proceeding, you will receive a prompt on <span className="text-white">{formData.phone}</span>. Enter your PIN to confirm the enrollment deposit and secure your seat in the <span className="text-white italic">{selectedCourse?.title}</span>.
+                    </p>
+                    <div className="flex items-center gap-2 text-[8px] font-black uppercase tracking-widest text-white/20">
+                      <ShieldCheck size={12} className="text-emerald-500" /> Secure Kenyan Payment Gateway
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <Button variant="ghost" onClick={() => setEnrollStep('details')} className="h-16 rounded-2xl px-8 border border-white/5 text-white/40 font-black uppercase text-[10px]">Back</Button>
+                    <Button 
+                      onClick={handlePayment} 
+                      disabled={loading}
+                      className="flex-1 h-16 bg-white text-black font-black uppercase tracking-widest rounded-2xl hover:bg-amber-500 transition-colors"
+                    >
+                      {loading ? 'Initializing...' : 'Confirm & Pay'}
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
