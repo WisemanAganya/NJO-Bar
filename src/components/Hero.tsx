@@ -43,7 +43,7 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
             key={currentAsset}
             initial={{ opacity: 0, scale: 1.1 }}
             animate={{ 
-              opacity: 0.6, 
+              opacity: 1, 
               scale: 1.2,
               transition: { duration: 15, ease: "linear" } 
             }}
@@ -54,7 +54,7 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
               <img 
                 src={HERO_ASSETS[currentAsset].url} 
                 alt="Luxury Bar" 
-                className="w-full h-full object-cover filter brightness-[0.7] contrast-[1.1] saturate-[1.1]"
+                className="w-full h-full object-cover filter brightness-[1.1] contrast-[1.1] saturate-[1.1]"
                 referrerPolicy="no-referrer"
               />
             ) : (
@@ -66,15 +66,15 @@ export function Hero({ onStartBooking }: { onStartBooking: () => void }) {
                   title="Instagram Reel"
                   allow="autoplay"
                 />
-                <div className="absolute inset-0 bg-zinc-950/40" />
+                <div className="absolute inset-0 bg-zinc-950/20" />
               </div>
             )}
           </motion.div>
         </AnimatePresence>
         
-        {/* Advanced Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/90 via-zinc-950/20 to-zinc-950 z-10" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)] z-10" />
+        {/* Advanced Overlays - Reduced for better visibility */}
+        <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/60 via-zinc-950/20 to-zinc-950 z-10" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)] z-10" />
         
         {/* Animated Grid lines for tech feel */}
         <div className="absolute inset-0 z-10 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
