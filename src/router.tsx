@@ -16,6 +16,9 @@ import { OrdersManager } from './components/OrdersManager';
 import { SettingsManager } from './components/SettingsManager';
 import { VoucherManager } from './components/VoucherManager';
 import { AuditManager } from './components/AuditManager';
+import { MembershipManager } from './components/MembershipManager';
+import { CommunicationManager } from './components/CommunicationManager';
+import { MeetingManager } from './components/MeetingManager';
 import VoucherVerifier from './components/VoucherVerifier';
 import { Hero } from './components/Hero';
 import { BookingSection } from './components/BookingSection';
@@ -87,6 +90,9 @@ export const createRouter = (user: any, profile: any, onLogout: () => void) => c
     children: [
       { index: true, element: <AdminDashboard /> },
       { path: 'analytics', element: <AnalyticsDashboard /> },
+      { path: 'members', element: <MembershipManager /> },
+      { path: 'comms', element: <CommunicationManager /> },
+      { path: 'meetings', element: <MeetingManager /> },
       { path: 'bookings', element: <BookingManagerFull /> },
       { path: 'cocktails', element: <CocktailManager /> },
       { path: 'courses', element: <CourseManager /> },

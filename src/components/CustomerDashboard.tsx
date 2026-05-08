@@ -225,6 +225,8 @@ export function CustomerDashboard({ user }: { user: any }) {
               <TabsTrigger value="vouchers" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Vouchers</TabsTrigger>
               <TabsTrigger value="academy" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Academy</TabsTrigger>
               <TabsTrigger value="orders" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Drink Orders</TabsTrigger>
+              <TabsTrigger value="meetings" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Meetings</TabsTrigger>
+              <TabsTrigger value="memos" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Memos</TabsTrigger>
               <TabsTrigger value="privacy" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Privacy</TabsTrigger>
             </TabsList>
           </div>
@@ -307,6 +309,39 @@ export function CustomerDashboard({ user }: { user: any }) {
                   <ArrowRight className="mt-6 text-emerald-500" />
                 </Card>
               </div>
+
+              {/* Digital Membership Card */}
+              <Card className="bg-gradient-to-br from-zinc-900 to-black border-white/10 rounded-[2.5rem] p-10 overflow-hidden relative shadow-2xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[100px] -mr-32 -mt-32" />
+                <div className="relative z-10 flex flex-col md:flex-row justify-between gap-10">
+                  <div className="space-y-8 flex-1">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center text-black font-black">NJO</div>
+                      <div>
+                        <h4 className="text-lg font-black uppercase italic tracking-tighter text-white">Digital <span className="text-amber-500">Member ID</span></h4>
+                        <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">{profile?.membership_number || 'NJO-2026-TEMP'}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${profile?.membership_status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
+                        <p className="text-sm font-black uppercase tracking-tight text-white">{profile?.membership_status || 'PENDING'} MEMBERSHIP</p>
+                      </div>
+                      <p className="text-xs text-white/60 font-medium leading-relaxed max-w-sm">
+                        Show this digital card at participating venues to access executive lounges and exclusive mixology events.
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                      <Button variant="outline" className="border-white/10 text-white rounded-xl h-12 px-6 font-black uppercase text-[10px] tracking-widest bg-white/5">Download PDF</Button>
+                      <Button variant="outline" className="border-white/10 text-white rounded-xl h-12 px-6 font-black uppercase text-[10px] tracking-widest bg-white/5">Renew Plans</Button>
+                    </div>
+                  </div>
+                  <div className="shrink-0 p-6 bg-white rounded-[2rem] flex flex-col items-center gap-4">
+                    <QrCode size={140} className="text-black" />
+                    <p className="text-[10px] font-black text-black uppercase tracking-widest">Verify Status</p>
+                  </div>
+                </div>
+              </Card>
             </div>
           </TabsContent>
 
@@ -465,8 +500,49 @@ export function CustomerDashboard({ user }: { user: any }) {
                   <div className="py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/20">No package requests found</p>
                   </div>
-                )}
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="meetings" className="space-y-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <Card className="bg-white/5 border-white/10 rounded-[2.5rem] p-8 overflow-hidden relative group">
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+                  <Calendar size={60} />
+                </div>
+                <div className="space-y-6 relative z-10">
+                  <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 font-black uppercase text-[9px]">Upcoming AGM</Badge>
+                  <h4 className="text-2xl font-black uppercase italic tracking-tighter leading-tight">Annual General Meeting 2026</h4>
+                  <div className="space-y-2 text-[10px] font-bold text-white/40 uppercase tracking-widest">
+                    <p className="flex items-center gap-2"><Clock size={12} className="text-amber-500" /> June 15, 2026 • 10:00 AM</p>
+                    <p className="flex items-center gap-2"><MapPin size={12} className="text-amber-500" /> Main Clubhouse / Virtual</p>
+                  </div>
+                  <Button className="w-full h-12 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-amber-500">Register Attendance</Button>
+                </div>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="memos" className="space-y-8">
+            <div className="grid grid-cols-1 gap-6">
+              <Card className="bg-white/5 border-white/10 rounded-[2.5rem] p-8 hover:bg-white/10 transition-all cursor-pointer group">
+                <div className="flex justify-between items-start">
+                  <div className="flex gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                      <FileText size={24} />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="border-white/10 text-[8px] font-black uppercase">Official Memo</Badge>
+                        <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">May 05, 2026</span>
+                      </div>
+                      <h4 className="text-xl font-black text-white uppercase italic tracking-tighter">Update on Membership Dues & Benefits</h4>
+                      <p className="text-sm text-white/40 line-clamp-1">Please find the updated structure for 2026 membership tiers and associated benefits.</p>
+                    </div>
+                  </div>
+                  <Download className="text-white/20 group-hover:text-white transition-colors" />
+                </div>
+              </Card>
             </div>
           </TabsContent>
 

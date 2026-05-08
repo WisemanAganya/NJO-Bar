@@ -41,6 +41,9 @@ export function CMSLayout({ onLogout, user, children }: CMSLayoutProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/admin/analytics' },
+    { id: 'members', label: 'Members', icon: Users, path: '/admin/members' },
+    { id: 'comms', label: 'Communications', icon: Mail, path: '/admin/comms' },
+    { id: 'meetings', label: 'Meetings', icon: Calendar, path: '/admin/meetings' },
     { id: 'bookings', label: 'Bookings', icon: Calendar, path: '/admin/bookings' },
     { id: 'orders', label: 'Orders', icon: ShoppingCart, path: '/admin/orders' },
     { id: 'reminders', label: 'Reminders', icon: Bell, path: '/admin/reminders' },
@@ -49,7 +52,6 @@ export function CMSLayout({ onLogout, user, children }: CMSLayoutProps) {
     { id: 'courses', label: 'Courses', icon: GraduationCap, path: '/admin/courses' },
     { id: 'inventory', label: 'Inventory', icon: Package, path: '/admin/inventory' },
     { id: 'blog', label: 'Blog', icon: BookOpen, path: '/admin/blog' },
-    { id: 'users', label: 'Users', icon: Users, path: '/admin/users' },
     { id: 'vouchers', label: 'Vouchers', icon: Ticket, path: '/admin/vouchers' },
     { id: 'audit', label: 'Audit Logs', icon: History, path: '/admin/audit' },
     { id: 'settings', label: 'Settings', icon: Settings, path: '/admin/settings' },

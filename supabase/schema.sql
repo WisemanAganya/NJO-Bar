@@ -891,4 +891,123 @@ BEGIN
         )
     );
 END;
-$$;
+$$;
+
+-- ==================== MEMBERSHIP & COMMUNICATION (v3) ====================
+
+-- 1. Enhanced Membership Tracking
+ALTER TABLE public.profiles 
+ADD COLUMN IF NOT EXISTS membership_status TEXT CHECK (membership_status IN ('ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING')) DEFAULT 'PENDING',
+ADD COLUMN IF NOT EXISTS membership_number TEXT UNIQUE,
+ADD COLUMN IF NOT EXISTS joined_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW());
+
+-- Create membership_tiers table
+CREATE TABLE IF NOT EXISTS public.membership_tiers (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    price_annual DECIMAL(10,2) NOT NULL,
+    benefits JSONB DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Create memberships table
+CREATE TABLE IF NOT EXISTS public.memberships (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    tier_id UUID REFERENCES public.membership_tiers(id),
+    status TEXT DEFAULT 'ACTIVE',
+    start_date DATE NOT NULL,
+    expiry_date DATE NOT NULL,
+    auto_renew BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- 2. Communication System (Memos, Announcements)
+CREATE TABLE IF NOT EXISTS public.communications (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    sender_id UUID REFERENCES auth.users(id),
+    type TEXT CHECK (type IN ('MEMO', 'ANNOUNCEMENT', 'NEWSLETTER', 'URGENT')) NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    target_roles TEXT[] DEFAULT '{client}'::text[], -- Roles who can see this
+    published BOOLEAN DEFAULT true,
+    attachment_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- 3. Programs & Meetings (AGM, Events)
+CREATE TABLE IF NOT EXISTS public.meetings (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    meeting_type TEXT CHECK (meeting_type IN ('AGM', 'COMMITTEE', 'SOCIAL', 'PROGRAM')) NOT NULL,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    location TEXT,
+    virtual_link TEXT,
+    agenda JSONB DEFAULT '[]'::jsonb,
+    attendees_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- 4. Attendance Tracking
+CREATE TABLE IF NOT EXISTS public.attendance (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    meeting_id UUID REFERENCES public.meetings(id) ON DELETE CASCADE NOT NULL,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    status TEXT CHECK (status IN ('REGISTERED', 'ATTENDED', 'ABSENT')) DEFAULT 'REGISTERED',
+    check_in_time TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+    UNIQUE(meeting_id, user_id)
+);
+
+-- 5. RLS POLICIES FOR NEW TABLES
+
+-- Memberships
+ALTER TABLE public.memberships ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own membership" ON public.memberships FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admins can manage memberships" ON public.memberships FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- Communications
+ALTER TABLE public.communications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Everyone can view published communications" ON public.communications 
+    FOR SELECT USING (published = true AND (target_roles && ARRAY[(SELECT role FROM public.profiles WHERE id = auth.uid())]));
+CREATE POLICY "Admins can manage communications" ON public.communications FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- Meetings
+ALTER TABLE public.meetings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Everyone can view meetings" ON public.meetings FOR SELECT USING (true);
+CREATE POLICY "Admins can manage meetings" ON public.meetings FOR ALL USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- Attendance
+ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their own attendance" ON public.attendance FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "Admins can view all attendance" ON public.attendance FOR SELECT USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'admin')
+);
+
+-- 6. TRIGGERS
+CREATE TRIGGER handle_updated_at_memberships
+  BEFORE UPDATE ON public.memberships
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE TRIGGER handle_updated_at_communications
+  BEFORE UPDATE ON public.communications
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+CREATE TRIGGER handle_updated_at_meetings
+  BEFORE UPDATE ON public.meetings
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- ENABLE REALTIME
+ALTER PUBLICATION supabase_realtime ADD TABLE public.vouchers, public.memberships, public.communications, public.meetings, public.attendance;
