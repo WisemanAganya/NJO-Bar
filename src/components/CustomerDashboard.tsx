@@ -500,6 +500,7 @@ export function CustomerDashboard({ user }: { user: any }) {
                   <div className="py-12 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10">
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/20">No package requests found</p>
                   </div>
+                )}
               </div>
             </div>
           </TabsContent>
