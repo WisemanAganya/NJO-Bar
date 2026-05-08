@@ -21,8 +21,10 @@ export default defineConfig(({mode}) => {
       rollupOptions: {
         output: {
           manualChunks: {
-            vendor: ['react', 'react-dom'],
-            supabase: ['@supabase/supabase-js'],
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            'supabase-vendor': ['@supabase/supabase-js'],
+            'ui-vendor': ['lucide-react', 'motion/react', 'clsx', 'tailwind-merge'],
+            'utils-vendor': ['date-fns', 'sonner'],
           },
         },
       },

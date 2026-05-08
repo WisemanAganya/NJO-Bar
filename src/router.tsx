@@ -1,45 +1,54 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { RootLayout } from './App';
-import { CMSLayout } from './components/cms/CMSLayout';
-import { AdminDashboard } from './components/AdminDashboard';
-import { AnalyticsDashboard } from './components/AnalyticsDashboard';
-import { BookingManagerFull } from './components/BookingManagerFull';
-import { CocktailManager } from './components/CocktailManager';
-import { CourseManager } from './components/CourseManager';
-import { InventoryManagerFull } from './components/InventoryManagerFull';
-import { UserManager } from './components/UserManager';
-import { ReminderManager } from './components/ReminderManager';
-import { LeadManager } from './components/LeadManager';
-import { BlogManager } from './components/BlogManager';
-import { OrdersManager } from './components/OrdersManager';
-import { SettingsManager } from './components/SettingsManager';
-import { VoucherManager } from './components/VoucherManager';
-import { AuditManager } from './components/AuditManager';
-import { MembershipManager } from './components/MembershipManager';
-import { CommunicationManager } from './components/CommunicationManager';
-import { MeetingManager } from './components/MeetingManager';
-import VoucherVerifier from './components/VoucherVerifier';
-import { Hero } from './components/Hero';
-import { BookingSection } from './components/BookingSection';
-import { CourseList } from './components/CourseList';
-import { OurDrinks } from './components/OurDrinks';
-import { EventHistory } from './components/EventHistory';
-import { BlogSection } from './components/BlogSection';
-import { ContactSection } from './components/ContactSection';
-import { CustomerDashboard } from './components/CustomerDashboard';
-import { CocktailGallery } from './components/CocktailGallery';
-import { PackageBuilder } from './components/PackageBuilder';
-import { MembershipPage } from './components/MembershipPage';
-import { VoucherSystem } from './components/VoucherSystem';
 
-import { EventTypesSection } from './components/EventTypesSection';
+// Loading Component
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+    <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+// Lazy Loaded Components
+const CMSLayout = lazy(() => import('./components/cms/CMSLayout').then(m => ({ default: m.CMSLayout })));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AnalyticsDashboard = lazy(() => import('./components/AnalyticsDashboard').then(m => ({ default: m.AnalyticsDashboard })));
+const BookingManagerFull = lazy(() => import('./components/BookingManagerFull').then(m => ({ default: m.BookingManagerFull })));
+const CocktailManager = lazy(() => import('./components/CocktailManager').then(m => ({ default: m.CocktailManager })));
+const CourseManager = lazy(() => import('./components/CourseManager').then(m => ({ default: m.CourseManager })));
+const InventoryManagerFull = lazy(() => import('./components/InventoryManagerFull').then(m => ({ default: m.InventoryManagerFull })));
+const UserManager = lazy(() => import('./components/UserManager').then(m => ({ default: m.UserManager })));
+const ReminderManager = lazy(() => import('./components/ReminderManager').then(m => ({ default: m.ReminderManager })));
+const LeadManager = lazy(() => import('./components/LeadManager').then(m => ({ default: m.LeadManager })));
+const BlogManager = lazy(() => import('./components/BlogManager').then(m => ({ default: m.BlogManager })));
+const OrdersManager = lazy(() => import('./components/OrdersManager').then(m => ({ default: m.OrdersManager })));
+const SettingsManager = lazy(() => import('./components/SettingsManager').then(m => ({ default: m.SettingsManager })));
+const VoucherManager = lazy(() => import('./components/VoucherManager').then(m => ({ default: m.VoucherManager })));
+const AuditManager = lazy(() => import('./components/AuditManager').then(m => ({ default: m.AuditManager })));
+const MembershipManager = lazy(() => import('./components/MembershipManager').then(m => ({ default: m.MembershipManager })));
+const CommunicationManager = lazy(() => import('./components/CommunicationManager').then(m => ({ default: m.CommunicationManager })));
+const MeetingManager = lazy(() => import('./components/MeetingManager').then(m => ({ default: m.MeetingManager })));
+const VoucherVerifier = lazy(() => import('./components/VoucherVerifier'));
+
+const Hero = lazy(() => import('./components/Hero').then(m => ({ default: m.Hero })));
+const BookingSection = lazy(() => import('./components/BookingSection').then(m => ({ default: m.BookingSection })));
+const CourseList = lazy(() => import('./components/CourseList').then(m => ({ default: m.CourseList })));
+const OurDrinks = lazy(() => import('./components/OurDrinks').then(m => ({ default: m.OurDrinks })));
+const EventHistory = lazy(() => import('./components/EventHistory').then(m => ({ default: m.EventHistory })));
+const BlogSection = lazy(() => import('./components/BlogSection').then(m => ({ default: m.BlogSection })));
+const ContactSection = lazy(() => import('./components/ContactSection').then(m => ({ default: m.ContactSection })));
+const CustomerDashboard = lazy(() => import('./components/CustomerDashboard').then(m => ({ default: m.CustomerDashboard })));
+const CocktailGallery = lazy(() => import('./components/CocktailGallery').then(m => ({ default: m.CocktailGallery })));
+const PackageBuilder = lazy(() => import('./components/PackageBuilder').then(m => ({ default: m.PackageBuilder })));
+const MembershipPage = lazy(() => import('./components/MembershipPage').then(m => ({ default: m.MembershipPage })));
+const VoucherSystem = lazy(() => import('./components/VoucherSystem').then(m => ({ default: m.VoucherSystem })));
+const EventTypesSection = lazy(() => import('./components/EventTypesSection').then(m => ({ default: m.EventTypesSection })));
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children, profile, role }: { children: React.ReactNode, profile: any, role?: string }) => {
   if (!profile) return <Navigate to="/" replace />;
   if (role && profile.role !== role) return <Navigate to="/" replace />;
-  return <>{children}</>;
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 };
 
 export const createRouter = (user: any, profile: any, onLogout: () => void) => createBrowserRouter([
@@ -50,25 +59,25 @@ export const createRouter = (user: any, profile: any, onLogout: () => void) => c
       {
         index: true,
         element: (
-          <>
+          <Suspense fallback={<PageLoader />}>
             <Hero onStartBooking={() => {}} />
             <EventTypesSection />
             <CourseList />
             <CocktailGallery user={user} />
-          </>
+          </Suspense>
         )
       },
-      { path: 'bookings', element: <div className="pt-20"><BookingSection user={user} /></div> },
-      { path: 'academy', element: <div className="pt-20"><CourseList /></div> },
-      { path: 'drinks', element: <div className="pt-20"><OurDrinks user={user} /></div> },
-      { path: 'packages', element: <div className="pt-20"><PackageBuilder user={user} /></div> },
-      { path: 'events', element: <div className="pt-20"><EventHistory /></div> },
-      { path: 'blog', element: <div className="pt-20"><BlogSection /></div> },
-      { path: 'contact', element: <div className="pt-20"><ContactSection /></div> },
-      { path: 'account', element: <div className="pt-20"><CustomerDashboard user={user} /></div> },
-      { path: 'community', element: <div className="pt-20"><CocktailGallery user={user} /></div> },
-      { path: 'membership', element: <div className="pt-20"><MembershipPage /></div> },
-      { path: 'vouchers', element: <div className="pt-20"><VoucherSystem /></div> },
+      { path: 'bookings', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><BookingSection user={user} /></Suspense></div> },
+      { path: 'academy', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><CourseList /></Suspense></div> },
+      { path: 'drinks', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><OurDrinks user={user} /></Suspense></div> },
+      { path: 'packages', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><PackageBuilder user={user} /></Suspense></div> },
+      { path: 'events', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><EventHistory /></Suspense></div> },
+      { path: 'blog', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><BlogSection /></Suspense></div> },
+      { path: 'contact', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><ContactSection /></Suspense></div> },
+      { path: 'account', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><CustomerDashboard user={user} /></Suspense></div> },
+      { path: 'community', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><CocktailGallery user={user} /></Suspense></div> },
+      { path: 'membership', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><MembershipPage /></Suspense></div> },
+      { path: 'vouchers', element: <div className="pt-20"><Suspense fallback={<PageLoader />}><VoucherSystem /></Suspense></div> },
       { path: '*', element: <Navigate to="/" replace /> }
     ]
   },
@@ -103,14 +112,8 @@ export const createRouter = (user: any, profile: any, onLogout: () => void) => c
       { path: 'blog', element: <BlogManager /> },
       { path: 'vouchers', element: <VoucherManager /> },
       { path: 'audit', element: <AuditManager /> },
-      { 
-        path: 'orders', 
-        element: <OrdersManager />
-      },
-      { 
-        path: 'settings', 
-        element: <SettingsManager />
-      },
+      { path: 'orders', element: <OrdersManager /> },
+      { path: 'settings', element: <SettingsManager /> },
     ]
   }
 ]);
