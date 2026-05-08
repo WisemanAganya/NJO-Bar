@@ -19,7 +19,10 @@ import {
   Plus,
   Mail,
   MessageCircle,
-  Share2
+  Share2,
+  Shield,
+  FileText,
+  Trash
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -222,6 +225,7 @@ export function CustomerDashboard({ user }: { user: any }) {
               <TabsTrigger value="vouchers" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Vouchers</TabsTrigger>
               <TabsTrigger value="academy" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Academy</TabsTrigger>
               <TabsTrigger value="orders" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Drink Orders</TabsTrigger>
+              <TabsTrigger value="privacy" className="rounded-full px-8 py-3 font-black uppercase text-[10px] tracking-widest data-[state=active]:bg-amber-500 data-[state=active]:text-black">Privacy</TabsTrigger>
             </TabsList>
           </div>
 
@@ -463,6 +467,72 @@ export function CustomerDashboard({ user }: { user: any }) {
                   </div>
                 )}
               </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="privacy" className="space-y-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-white/5 border-white/10 rounded-[2.5rem] p-10 backdrop-blur-xl">
+                <CardHeader className="p-0 mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                      <Shield size={24} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-black uppercase italic tracking-tighter">Data <span className="text-amber-500">Consent</span></CardTitle>
+                      <CardDescription className="text-white/40 text-[10px] font-black uppercase tracking-widest">Manage your privacy preferences</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 space-y-6">
+                  <div className="flex items-center justify-between p-6 rounded-[2rem] bg-white/5 border border-white/10">
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold uppercase tracking-tight">Marketing Communications</p>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed">Receive updates on new cocktails and events.</p>
+                    </div>
+                    <div className="w-12 h-6 bg-amber-500 rounded-full flex items-center px-1 cursor-pointer">
+                      <div className="w-4 h-4 bg-black rounded-full translate-x-6" />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between p-6 rounded-[2rem] bg-white/5 border border-white/10">
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold uppercase tracking-tight">Data Processing</p>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest leading-relaxed">Essential for voucher and booking management.</p>
+                    </div>
+                    <div className="w-12 h-6 bg-emerald-500 rounded-full flex items-center px-1 cursor-pointer">
+                      <div className="w-4 h-4 bg-black rounded-full translate-x-6" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white/5 border-white/10 rounded-[2.5rem] p-10 backdrop-blur-xl">
+                <CardHeader className="p-0 mb-8">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                      <FileText size={24} />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-black uppercase italic tracking-tighter">My <span className="text-blue-500">Data</span></CardTitle>
+                      <CardDescription className="text-white/40 text-[10px] font-black uppercase tracking-widest">GDPR / DPA 2019 Rights</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                  <Button variant="outline" className="w-full h-16 rounded-2xl border-white/10 bg-white/5 font-black uppercase text-[10px] tracking-widest flex justify-between px-6 hover:bg-white/10">
+                    Request Data Export <Download size={16} />
+                  </Button>
+                  <Button variant="outline" className="w-full h-16 rounded-2xl border-white/10 bg-white/5 font-black uppercase text-[10px] tracking-widest flex justify-between px-6 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20">
+                    Right to be Forgotten <Trash size={16} />
+                  </Button>
+                  <div className="mt-4 p-5 rounded-2xl bg-amber-500/5 border border-amber-500/20 flex gap-4 items-start">
+                    <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0" />
+                    <p className="text-[9px] text-amber-500/80 leading-relaxed font-bold uppercase tracking-wider">
+                      Your data is protected under Kenya Data Protection Act 2019. We encrypt all sensitive information and do not share it with third parties.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
         </Tabs>

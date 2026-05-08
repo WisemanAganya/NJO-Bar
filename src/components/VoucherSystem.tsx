@@ -61,6 +61,7 @@ export function VoucherSystem() {
   const [phoneNumber, setPhoneNumber] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [showPurchase, setShowPurchase] = React.useState(false);
+  const [consentGiven, setConsentGiven] = React.useState(false);
 
   const handlePurchaseInit = (option: VoucherOption) => {
     if (!user) {
@@ -74,6 +75,10 @@ export function VoucherSystem() {
   const handleFinalPurchase = async () => {
     if (!phoneNumber || phoneNumber.length < 10) {
       toast.error("Please enter a valid M-Pesa phone number");
+      return;
+    }
+    if (!consentGiven) {
+      toast.error("You must agree to the data processing terms");
       return;
     }
     if (!selectedOption) return;
@@ -269,6 +274,19 @@ export function VoucherSystem() {
               <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider leading-relaxed">
                 Secure 256-bit encrypted transaction via Safaricom M-Pesa.
               </p>
+            </div>
+
+            <div className="flex items-start gap-3 px-2">
+              <input 
+                type="checkbox" 
+                id="consent" 
+                checked={consentGiven}
+                onChange={(e) => setConsentGiven(e.target.checked)}
+                className="mt-1 accent-amber-500"
+              />
+              <Label htmlFor="consent" className="text-[10px] text-white/40 leading-relaxed cursor-pointer">
+                I agree to the <span className="text-amber-500 underline">Terms of Service</span> and acknowledge that my data will be processed in accordance with the <span className="text-amber-500 underline">Kenya Data Protection Act 2019</span> and <span className="text-amber-500 underline">GDPR</span>.
+              </Label>
             </div>
           </div>
 

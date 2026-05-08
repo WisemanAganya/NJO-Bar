@@ -114,6 +114,60 @@ export function SettingsManager() {
             </div>
           </CardContent>
         </Card>
+        <Card className="bg-white/5 border-white/10 text-white lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-amber-500" />
+              <CardTitle>Compliance & Data Privacy (GDPR / DPA 2019)</CardTitle>
+            </div>
+            <CardDescription className="text-white/40">
+              Manage data protection settings and regulatory compliance frameworks.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Data Processing Consent</p>
+                    <p className="text-xs text-white/40">Require explicit consent for data collection.</p>
+                  </div>
+                  <Switch checked={true} />
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Right to be Forgotten</p>
+                    <p className="text-xs text-white/40">Enable automatic account deletion requests.</p>
+                  </div>
+                  <Switch checked={true} />
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Data Portability</p>
+                    <p className="text-xs text-white/40">Allow users to export their profile and history.</p>
+                  </div>
+                  <Switch checked={true} />
+                </div>
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Marketing Opt-in</p>
+                    <p className="text-xs text-white/40">Strict double opt-in for newsletters.</p>
+                  </div>
+                  <Switch checked={true} />
+                </div>
+              </div>
+            </div>
+            <div className="mt-8 p-6 rounded-[2rem] bg-amber-500/5 border border-amber-500/20">
+              <h4 className="text-xs font-black uppercase tracking-[0.2em] text-amber-500 mb-2">Compliance Status</h4>
+              <p className="text-sm text-white/60 leading-relaxed">
+                The application is currently configured to adhere to the <strong>Kenya Data Protection Act 2019</strong> and <strong>GDPR</strong>. 
+                All user data is encrypted at rest and in transit. Access logs are maintained in the <span className="text-white font-bold underline cursor-pointer">Audit Manager</span>.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

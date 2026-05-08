@@ -16,6 +16,7 @@ import { OrdersManager } from './components/OrdersManager';
 import { SettingsManager } from './components/SettingsManager';
 import { VoucherManager } from './components/VoucherManager';
 import { AuditManager } from './components/AuditManager';
+import VoucherVerifier from './components/VoucherVerifier';
 import { Hero } from './components/Hero';
 import { BookingSection } from './components/BookingSection';
 import { CourseList } from './components/CourseList';
@@ -67,6 +68,14 @@ export const createRouter = (user: any, profile: any, onLogout: () => void) => c
       { path: 'vouchers', element: <div className="pt-20"><VoucherSystem /></div> },
       { path: '*', element: <Navigate to="/" replace /> }
     ]
+  },
+  {
+    path: '/admin/verify/:code',
+    element: (
+      <ProtectedRoute profile={profile} role="admin">
+        <VoucherVerifier />
+      </ProtectedRoute>
+    )
   },
   {
     path: '/admin',

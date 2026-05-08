@@ -22,6 +22,22 @@ export function VoucherManager() {
 
   React.useEffect(() => {
     fetchVouchers();
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel('voucher-updates')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'vouchers' 
+      }, () => {
+        fetchVouchers();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleRedeem = async () => {
